@@ -21,6 +21,47 @@ export interface Product {
 }
 
 /**
+ * 产品类型
+ */
+export interface ProductType {
+  id: number
+  typeName: string
+  remark?: string
+}
+
+/**
+ * 用户信息
+ */
+export interface User {
+  id: number
+  username: string
+  password?: string
+  roleId: number
+  status: number
+  createTime?: string
+}
+
+/**
+ * 登录请求
+ */
+export interface LoginRequest {
+  username: string
+  password: string
+}
+
+/**
+ * 登录响应
+ */
+export interface LoginResponse {
+  token: string
+  userId: number
+  username: string
+  roleId: number
+  roleName: string
+  roleCode: string
+}
+
+/**
  * 销售请求参数
  */
 export interface SaleRequest {
@@ -38,3 +79,22 @@ export interface StockRequest {
   operatorId: number
 }
 
+/**
+ * 统计信息
+ */
+export interface StatisticsVO {
+  label: string
+  count: number
+  totalAmount: number
+}
+
+/**
+ * 库存预警
+ */
+export interface StockWarning {
+  productId: number
+  productName: string
+  stock: number
+  threshold: number
+  level: number
+}

@@ -18,5 +18,14 @@ export const productApi = {
   getProductById(id: number): Promise<Result<Product>> {
     return request.get(`/product/${id}`)
   },
-}
 
+  /**
+   * 搜索产品
+   */
+  searchProduct(productName?: string, typeId?: number): Promise<Result<Product[]>> {
+    const params: any = {}
+    if (productName) params.productName = productName
+    if (typeId) params.typeId = typeId
+    return request.get('/product/search', { params })
+  },
+}

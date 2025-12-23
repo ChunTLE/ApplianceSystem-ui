@@ -1,12 +1,12 @@
 <template>
-  <div class="sale-container">
+  <div class="stock-out-container">
     <el-card>
       <template #header>
-        <span>产品销售</span>
+        <span>产品出库</span>
       </template>
 
       <el-form
-        :model="saleForm"
+        :model="stockOutForm"
         :rules="rules"
         ref="formRef"
         label-width="120px"
@@ -14,34 +14,34 @@
       >
         <el-form-item label="产品ID" prop="productId">
           <el-input-number
-            v-model="saleForm.productId"
+            v-model="stockOutForm.productId"
             :min="1"
             placeholder="请输入产品ID"
             style="width: 100%"
           />
         </el-form-item>
 
-        <el-form-item label="销售数量" prop="quantity">
+        <el-form-item label="出库数量" prop="quantity">
           <el-input-number
-            v-model="saleForm.quantity"
+            v-model="stockOutForm.quantity"
             :min="1"
-            placeholder="请输入销售数量"
+            placeholder="请输入出库数量"
             style="width: 100%"
           />
         </el-form-item>
 
-        <el-form-item label="销售员ID" prop="salesmanId">
+        <el-form-item label="操作员ID" prop="operatorId">
           <el-input-number
-            v-model="saleForm.salesmanId"
+            v-model="stockOutForm.operatorId"
             :min="1"
-            placeholder="请输入销售员ID"
+            placeholder="请输入操作员ID"
             style="width: 100%"
           />
         </el-form-item>
 
         <el-form-item>
-          <el-button type="primary" @click="handleSale" :loading="submitting">
-            提交销售
+          <el-button type="warning" @click="handleStockOut" :loading="submitting">
+            确认出库
           </el-button>
           <el-button @click="resetForm">重置</el-button>
         </el-form-item>
@@ -54,18 +54,18 @@
 import { ref, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import { saleApi } from '@/api/sale'
+import { stockApi } from '@/api/stock'
 import { useUserStore } from '@/stores/user'
-import type { SaleRequest } from '@/types/api'
+import type { StockRequest } from '@/types/api'
 
 const userStore = useUserStore()
 const formRef = ref<FormInstance>()
 const submitting = ref(false)
 
-const saleForm = reactive<SaleRequest>({
+const stockOutForm = reactive<StockRequest>({
   productId: 0,
   quantity: 0,
-  salesmanId: userStore.userInfo?.userId || 0,
+  operatorId: userStore.userInfo?.userId || 0,
 })
 
 const rules: FormRules = {
@@ -74,24 +74,24 @@ const rules: FormRules = {
     { type: 'number', min: 1, message: '产品ID必须大于0', trigger: 'blur' },
   ],
   quantity: [
-    { required: true, message: '请输入销售数量', trigger: 'blur' },
-    { type: 'number', min: 1, message: '销售数量必须大于0', trigger: 'blur' },
+    { required: true, message: '请输入出库数量', trigger: 'blur' },
+    { type: 'number', min: 1, message: '出库数量必须大于0', trigger: 'blur' },
   ],
-  salesmanId: [
-    { required: true, message: '请输入销售员ID', trigger: 'blur' },
-    { type: 'number', min: 1, message: '销售员ID必须大于0', trigger: 'blur' },
+  operatorId: [
+    { required: true, message: '请输入操作员ID', trigger: 'blur' },
+    { type: 'number', min: 1, message: '操作员ID必须大于0', trigger: 'blur' },
   ],
 }
 
-const handleSale = async () => {
+const handleStockOut = async () => {
   if (!formRef.value) return
 
   await formRef.value.validate(async (valid) => {
     if (valid) {
       try {
         await ElMessageBox.confirm(
-          `确认销售产品ID: ${saleForm.productId}, 数量: ${saleForm.quantity}?`,
-          '确认销售',
+          `确认出库产品ID: ${stockOutForm.productId}, 数量: ${stockOutForm.quantity}?`,
+          '确认出库',
           {
             confirmButtonText: '确定',
             cancelButtonText: '取消',
@@ -100,12 +100,12 @@ const handleSale = async () => {
         )
 
         submitting.value = true
-        await saleApi.sell(saleForm)
-        ElMessage.success('销售成功')
+        await stockApi.stockOut(stockOutForm)
+        ElMessage.success('出库成功')
         resetForm()
       } catch (error: any) {
         if (error !== 'cancel') {
-          console.error('销售失败:', error)
+          console.error('出库失败:', error)
         }
       } finally {
         submitting.value = false
@@ -116,16 +116,16 @@ const handleSale = async () => {
 
 const resetForm = () => {
   formRef.value?.resetFields()
-  Object.assign(saleForm, {
+  Object.assign(stockOutForm, {
     productId: 0,
     quantity: 0,
-    salesmanId: userStore.userInfo?.userId || 0,
+    operatorId: userStore.userInfo?.userId || 0,
   })
 }
 </script>
 
 <style scoped>
-.sale-container {
+.stock-out-container {
   height: 100%;
 }
 </style>
