@@ -94,7 +94,7 @@ const loadStatistics = async () => {
     saleData.value = saleRes.data || []
     saleByProductData.value = saleByProductRes.data || []
 
-    ElMessage.success('加载成功')
+    // ElMessage.success('加载成功')
   } catch (error) {
     console.error('加载统计失败:', error)
   }

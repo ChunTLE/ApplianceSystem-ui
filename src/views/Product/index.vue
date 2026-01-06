@@ -61,7 +61,7 @@ const loadProductList = async () => {
   try {
     const res = await productApi.getProductList()
     productList.value = res.data || []
-    ElMessage.success('加载成功')
+    // ElMessage.success('加载成功')
   } catch (error) {
     console.error('加载产品列表失败:', error)
   } finally {
