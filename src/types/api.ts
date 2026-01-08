@@ -50,6 +50,15 @@ export interface LoginRequest {
 }
 
 /**
+ * 注册请求
+ */
+export interface RegisterRequest {
+  username: string
+  password: string
+  roleId: number // 2-库存人员，3-销售人员
+}
+
+/**
  * 登录响应
  */
 export interface LoginResponse {
