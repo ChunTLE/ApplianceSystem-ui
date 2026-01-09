@@ -25,6 +25,7 @@
         <el-tab-pane label="入库统计" name="stockIn">
           <el-table :data="stockInData" stripe style="width: 100%">
             <el-table-column prop="label" label="日期" />
+            <el-table-column prop="productName" label="产品名称" />
             <el-table-column prop="count" label="入库数量" />
           </el-table>
         </el-tab-pane>
@@ -32,6 +33,7 @@
         <el-tab-pane label="出库统计" name="stockOut">
           <el-table :data="stockOutData" stripe style="width: 100%">
             <el-table-column prop="label" label="日期" />
+            <el-table-column prop="productName" label="产品名称" />
             <el-table-column prop="count" label="出库数量" />
           </el-table>
         </el-tab-pane>
@@ -39,6 +41,7 @@
         <el-tab-pane label="销售统计（按日期）" name="sale">
           <el-table :data="saleData" stripe style="width: 100%">
             <el-table-column prop="label" label="日期" />
+            <el-table-column prop="productName" label="产品名称" />
             <el-table-column prop="count" label="销售数量" />
             <el-table-column prop="totalAmount" label="销售金额">
               <template #default="{ row }">
@@ -129,9 +132,9 @@ const exportData = () => {
       })
       break
     case 'saleByProduct':
-      csvContent = '产品,销售数量,销售金额\n'
+      csvContent = '产品,产品名称,销售数量,销售金额\n'
       saleByProductData.value.forEach((item) => {
-        csvContent += `${item.label},${item.count},${item.totalAmount || 0}\n`
+        csvContent += `${item.label},${item.productName || ''},${item.count},${item.totalAmount || 0}\n`
       })
       break
   }

@@ -96,6 +96,7 @@ export interface StatisticsVO {
   label: string
   count: number
   totalAmount: number
+  productName?: string  // 产品名称（可选）
 }
 
 /**
