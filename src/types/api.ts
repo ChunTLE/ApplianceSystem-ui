@@ -100,6 +100,15 @@ export interface StatisticsVO {
 }
 
 /**
+ * 入库统计图表数据
+ */
+export interface StockInChartVO {
+  counts: number[]
+  productNames: string[]
+  dates: string[]
+}
+
+/**
  * 库存预警
  */
 export interface StockWarning {
@@ -108,4 +117,24 @@ export interface StockWarning {
   stock: number
   threshold: number
   level: number
+}
+
+/**
+ * 销售统计详情
+ */
+export interface SaleDetailVO {
+  date: string
+  amount: number
+  quantity: number
+  productName: string
+}
+
+/**
+ * 销售统计图表数据
+ */
+export interface SaleChartVO {
+  amounts: number[]
+  quantities: number[]
+  productNames: string[]
+  dates: string[]
 }
