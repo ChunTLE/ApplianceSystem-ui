@@ -115,7 +115,11 @@ const loadUserList = async () => {
   loading.value = true
   try {
     const res = await userApi.getUserList()
-    userList.value = res.data || []
+    // 将ID转换为字符串，避免大整数精度丢失
+    userList.value = (res.data || []).map(user => ({
+      ...user,
+      id: String(user.id)  // 确保ID是字符串类型
+    }))
   } catch (error) {
     console.error('加载用户列表失败:', error)
   } finally {
@@ -142,12 +146,25 @@ const handleDelete = async (row: User) => {
       cancelButtonText: '取消',
       type: 'warning',
     })
-    await userApi.deleteUser(row.id!)
+    
+    // 验证id是否存在
+    if (!row.id) {
+      ElMessage.error('用户ID不存在，无法删除')
+      console.error('删除失败: 用户ID为', row)
+      return
+    }
+    
+    // 将ID转换为字符串，避免大整数精度丢失
+    const userId = String(row.id)
+    await userApi.deleteUser(userId)
     ElMessage.success('删除成功')
     loadUserList()
   } catch (error: any) {
     if (error !== 'cancel') {
       console.error('删除失败:', error)
+      // 显示错误消息
+      const errorMessage = error?.response?.data?.message || error?.message || '删除失败，请稍后重试'
+      ElMessage.error(errorMessage)
     }
   }
 }
@@ -158,10 +175,17 @@ const handleSubmit = async () => {
   await formRef.value.validate(async (valid) => {
     if (valid) {
       try {
-        if (form.id) {
-          await userApi.updateUser(form)
+        // 准备提交的数据，确保ID类型正确
+        const submitData = {
+          ...form,
+          // 如果ID是字符串，转换为数字（后端期望Long类型）
+          id: form.id ? (typeof form.id === 'string' ? Number(form.id) : form.id) : undefined
+        }
+        
+        if (submitData.id) {
+          await userApi.updateUser(submitData)
         } else {
-          await userApi.saveUser(form)
+          await userApi.saveUser(submitData)
         }
         ElMessage.success('操作成功')
         dialogVisible.value = false

@@ -14,6 +14,7 @@ export interface Product {
   id: number
   productName: string
   typeId: number
+  typeName?: string  // 产品类型名称
   price: number
   stock: number
   status: number
@@ -33,7 +34,7 @@ export interface ProductType {
  * 用户信息
  */
 export interface User {
-  id: number
+  id: number | string  // 使用 string 或 number，避免大整数精度丢失
   username: string
   password?: string
   roleId: number

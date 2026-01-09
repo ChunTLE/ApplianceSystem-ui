@@ -17,7 +17,12 @@
       >
         <el-table-column prop="id" label="产品ID" width="100" sortable />
         <el-table-column prop="productName" label="产品名称" min-width="150" />
-        <el-table-column prop="typeId" label="类型ID" width="100" />
+        <el-table-column prop="typeName" label="产品类型" width="120">
+          <template #default="{ row }">
+            <span v-if="row.typeName">{{ row.typeName }}</span>
+            <span v-else>类型ID: {{ row.typeId }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="price" label="价格" width="120">
           <template #default="{ row }">
             ¥{{ row.price?.toFixed(2) }}
@@ -61,6 +66,12 @@ const loadProductList = async () => {
   try {
     const res = await productApi.getProductList()
     productList.value = res.data || []
+    // 调试：检查数据
+    console.log('产品列表数据:', productList.value)
+    if (productList.value.length > 0) {
+      console.log('第一个产品的数据:', productList.value[0])
+      console.log('第一个产品的typeName:', productList.value[0].typeName)
+    }
     // ElMessage.success('加载成功')
   } catch (error) {
     console.error('加载产品列表失败:', error)

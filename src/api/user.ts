@@ -15,7 +15,7 @@ export const userApi = {
   /**
    * 根据ID查询用户
    */
-  getUserById(id: number): Promise<Result<User>> {
+  getUserById(id: number | string): Promise<Result<User>> {
     return request.get(`/user/${id}`)
   },
 
@@ -36,7 +36,7 @@ export const userApi = {
   /**
    * 删除用户
    */
-  deleteUser(id: number): Promise<Result> {
+  deleteUser(id: number | string): Promise<Result> {
     return request.delete(`/user/${id}`)
   },
 }
