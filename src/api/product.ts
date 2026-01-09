@@ -28,4 +28,25 @@ export const productApi = {
     if (typeId) params.typeId = typeId
     return request.get('/product/search', { params })
   },
+
+  /**
+   * 新增产品
+   */
+  saveProduct(product: Omit<Product, 'id'>): Promise<Result<number>> {
+    return request.post('/product', product)
+  },
+
+  /**
+   * 更新产品
+   */
+  updateProduct(product: Product): Promise<Result> {
+    return request.put(`/product/${product.id}`, product)
+  },
+
+  /**
+   * 删除产品
+   */
+  deleteProduct(id: number): Promise<Result> {
+    return request.delete(`/product/${id}`)
+  },
 }
