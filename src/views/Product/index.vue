@@ -4,7 +4,10 @@
       <template #header>
         <div class="card-header">
           <span>产品列表</span>
-          <el-button type="primary" @click="loadProductList">刷新</el-button>
+          <div>
+            <el-button type="primary" @click="handleNew">新建</el-button>
+            <el-button type="primary" @click="loadProductList">刷新</el-button>
+          </div>
         </div>
       </template>
 
@@ -17,10 +20,10 @@
       >
         <el-table-column prop="id" label="产品ID" width="100" sortable />
         <el-table-column prop="productName" label="产品名称" min-width="150" />
-        <el-table-column prop="typeName" label="产品类型" width="120">
+        <el-table-column prop="typeName" label="产品类型" width="150">
           <template #default="{ row }">
             <span v-if="row.typeName">{{ row.typeName }}</span>
-            <span v-else>类型ID: {{ row.typeId }}</span>
+            <span v-else>{{ getTypeNameById(row.typeId) }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="price" label="价格" width="120">
@@ -67,8 +70,15 @@
         <el-form-item label="产品名称" prop="productName">
           <el-input v-model="form.productName" placeholder="请输入产品名称" />
         </el-form-item>
-        <el-form-item label="产品类型ID" prop="typeId">
-          <el-input-number v-model="form.typeId" :min="1" placeholder="请输入类型ID" style="width: 100%" />
+        <el-form-item label="产品类型" prop="typeId">
+          <el-select v-model="form.typeId" placeholder="请选择产品类型" style="width: 100%" clearable>
+            <el-option
+              v-for="type in typeList"
+              :key="type.id"
+              :label="type.typeName"
+              :value="type.id"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="价格" prop="price">
           <el-input-number 
@@ -110,10 +120,12 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, FormInstance, FormRules } from 'element-plus'
 import { productApi } from '@/api/product'
-import type { Product } from '@/types/api'
+import { productTypeApi } from '@/api/productType'
+import type { Product, ProductType } from '@/types/api'
 
 const loading = ref(false)
 const productList = ref<Product[]>([])
+const typeList = ref<ProductType[]>([])
 
 // 对话框相关
 const dialogVisible = ref(false)
@@ -134,7 +146,7 @@ const rules: FormRules = {
     { min: 1, max: 50, message: '产品名称长度应在1-50个字符之间', trigger: 'blur' }
   ],
   typeId: [
-    { required: true, message: '请输入产品类型ID', trigger: 'blur' },
+    { required: true, message: '请输入产品类型', trigger: 'blur' },
     { type: 'number', min: 1, message: '类型ID必须大于0', trigger: 'blur' }
   ],
   price: [
@@ -170,9 +182,33 @@ const loadProductList = async () => {
   }
 }
 
+// 加载产品类型列表
+const loadTypeList = async () => {
+  try {
+    const res = await productTypeApi.getTypeList()
+    typeList.value = res.data || []
+  } catch (error) {
+    console.error('加载类型列表失败:', error)
+    ElMessage.error('加载类型列表失败')
+  }
+}
+
 const formatTime = (time: string) => {
   if (!time) return '-'
   return new Date(time).toLocaleString('zh-CN')
+}
+
+// 根据类型ID获取类型名称
+const getTypeNameById = (typeId: number) => {
+  const type = typeList.value.find(t => t.id === typeId)
+  return type ? type.typeName : `类型ID: ${typeId}`
+}
+
+// 新建功能
+const handleNew = () => {
+  dialogTitle.value = '新建产品'
+  resetForm()
+  dialogVisible.value = true
 }
 
 // 编辑功能
@@ -264,6 +300,7 @@ const resetForm = () => {
 
 onMounted(() => {
   loadProductList()
+  loadTypeList()
 })
 </script>
 
