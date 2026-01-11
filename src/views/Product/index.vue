@@ -44,13 +44,7 @@
         </el-form-item>
       </el-form>
 
-      <el-table
-        v-loading="loading"
-        :data="productList"
-        stripe
-        style="width: 100%"
-        :default-sort="{ prop: 'id', order: 'ascending' }"
-      >
+      <el-table v-if="!loading" :data="productList" stripe style="width: 100%" :default-sort="{ prop: 'id', order: 'ascending' }">
         <el-table-column prop="productName" label="产品名称" min-width="150" />
         <el-table-column prop="typeName" label="产品类型" width="150">
           <template #default="{ row }">
@@ -89,6 +83,8 @@
           </template>
         </el-table-column>
       </el-table>
+      
+      <el-skeleton v-else :rows="6" animated />
       
       <!-- 分页 -->
       <div class="pagination" style="margin-top: 20px; display: flex; justify-content: center;">

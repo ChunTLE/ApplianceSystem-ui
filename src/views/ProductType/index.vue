@@ -25,7 +25,7 @@
         </el-form-item>
       </el-form>
 
-      <el-table v-loading="loading" :data="typeList" stripe style="width: 100%">
+      <el-table v-if="!loading" :data="typeList" stripe style="width: 100%">
         <el-table-column prop="typeName" label="类型名称" />
         <el-table-column prop="remark" label="备注" />
         <el-table-column label="操作" width="200">
@@ -35,6 +35,8 @@
           </template>
         </el-table-column>
       </el-table>
+      
+      <el-skeleton v-else :rows="6" animated />
       
       <!-- 分页 -->
       <div class="pagination" style="margin-top: 20px; display: flex; justify-content: center;">

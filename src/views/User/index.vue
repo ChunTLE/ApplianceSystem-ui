@@ -8,7 +8,7 @@
         </div>
       </template>
 
-      <el-table v-loading="loading" :data="userList" stripe style="width: 100%">
+      <el-table v-if="!loading" :data="userList" stripe style="width: 100%">
         <el-table-column prop="username" label="用户名" />
         <el-table-column prop="roleId" label="身份" width="100">
           <template #default="{ row }">
@@ -36,6 +36,8 @@
           </template>
         </el-table-column>
       </el-table>
+      
+      <el-skeleton v-else :rows="6" animated />
       
       <!-- 分页 -->
       <div class="pagination" style="margin-top: 20px; display: flex; justify-content: center;">

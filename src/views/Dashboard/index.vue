@@ -28,7 +28,7 @@
             </el-form-item>
           </el-form>
           
-          <el-table v-loading="loading" :data="warningList" stripe>
+          <el-table v-if="!loading" :data="warningList" stripe>
             <el-table-column prop="productName" label="产品名称" />
             <el-table-column prop="stock" label="当前库存">
               <template #default="{ row }">
@@ -46,6 +46,8 @@
               </template>
             </el-table-column>
           </el-table>
+          
+          <el-skeleton v-else :rows="6" animated />
           
           <!-- 分页 -->
           <div class="pagination" style="margin-top: 20px; display: flex; justify-content: center;">

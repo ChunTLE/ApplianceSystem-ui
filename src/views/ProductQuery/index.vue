@@ -37,7 +37,7 @@
       </el-form>
 
       <!-- 产品列表 -->
-      <el-table v-loading="loading" :data="productList" stripe style="width: 100%">
+      <el-table v-if="!loading" :data="productList" stripe style="width: 100%">
         <el-table-column prop="productName" label="产品名称" min-width="150" />
         <el-table-column prop="typeId" label="类型ID" width="100" />
         <el-table-column prop="price" label="价格" width="120">
@@ -60,6 +60,8 @@
           </template>
         </el-table-column>
       </el-table>
+      
+      <el-skeleton v-else :rows="6" animated />
       
       <!-- 分页 -->
       <div class="pagination" style="margin-top: 20px; display: flex; justify-content: center;">

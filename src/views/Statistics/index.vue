@@ -42,11 +42,14 @@
               <el-button @click="resetStockInSearch">重置</el-button>
             </el-form-item>
           </el-form>
-          <el-table :data="stockInTableData" stripe style="width: 100%">
+          <el-table v-if="stockInTableData.length > 0" :data="stockInTableData" stripe style="width: 100%">
             <el-table-column prop="label" label="日期" />
             <el-table-column prop="productName" label="产品名称" />
             <el-table-column prop="count" label="入库数量" />
           </el-table>
+          
+          <el-skeleton v-else :rows="6" animated />
+          
           <!-- 入库统计分页 -->
           <div class="pagination" style="margin-top: 20px; display: flex; justify-content: center;">
             <el-pagination
@@ -82,11 +85,14 @@
               <el-button @click="resetStockOutSearch">重置</el-button>
             </el-form-item>
           </el-form>
-          <el-table :data="stockOutTableData" stripe style="width: 100%">
+          <el-table v-if="stockOutTableData.length > 0" :data="stockOutTableData" stripe style="width: 100%">
             <el-table-column prop="label" label="日期" />
             <el-table-column prop="productName" label="产品名称" />
             <el-table-column prop="count" label="出库数量" />
           </el-table>
+          
+          <el-skeleton v-else :rows="6" animated />
+          
           <!-- 出库统计分页 -->
           <div class="pagination" style="margin-top: 20px; display: flex; justify-content: center;">
             <el-pagination
@@ -122,7 +128,7 @@
               <el-button @click="resetSaleSearch">重置</el-button>
             </el-form-item>
           </el-form>
-          <el-table :data="saleDetailTableData" stripe style="width: 100%">
+          <el-table v-if="saleDetailTableData.length > 0" :data="saleDetailTableData" stripe style="width: 100%">
             <el-table-column prop="date" label="销售日期" width="120" />
             <el-table-column prop="productName" label="产品名称" width="150" />
             <el-table-column prop="quantity" label="销售数量" width="100" />
@@ -132,6 +138,9 @@
               </template>
             </el-table-column>
           </el-table>
+          
+          <el-skeleton v-else :rows="6" animated />
+          
           <!-- 销售统计分页 -->
           <div class="pagination" style="margin-top: 20px; display: flex; justify-content: center;">
             <el-pagination

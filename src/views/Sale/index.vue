@@ -79,18 +79,15 @@
         </div>
       </template>
       
-      <el-table
-        :data="saleRecords"
-        stripe
-        style="width: 100%"
-        :loading="recordsLoading"
-      >
+      <el-table v-if="!recordsLoading" :data="saleRecords" stripe style="width: 100%">
         <el-table-column prop="productName" label="产品名称" />
         <el-table-column prop="quantity" label="销售数量" width="100" />
         <el-table-column prop="totalPrice" label="总价格" width="120" :formatter="priceFormatter" />
         <el-table-column prop="salesman" label="销售员" width="120" />
         <el-table-column prop="saleTime" label="销售时间" width="180" />
       </el-table>
+      
+      <el-skeleton v-else :rows="6" animated />
       
       <div class="pagination" style="margin-top: 20px; display: flex; justify-content: center;">
         <el-pagination
