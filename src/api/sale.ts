@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import type { Result, SaleRequest } from '@/types/api'
+import type { Result, SaleRequest, SaleRecord } from '@/types/api'
 
 /**
  * 销售API
@@ -14,6 +14,13 @@ export const saleApi = {
     params.append('quantity', data.quantity.toString())
     params.append('salesmanId', data.salesmanId.toString())
     return request.post(`/sale/sell?${params.toString()}`)
+  },
+
+  /**
+   * 获取销售记录
+   */
+  getSaleRecords(): Promise<Result<SaleRecord[]>> {
+    return request.get('/sale/records')
   },
 }
 

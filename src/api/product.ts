@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import type { Result, Product } from '@/types/api'
+import type { Result, Product, PageResult } from '@/types/api'
 
 /**
  * 产品API
@@ -16,7 +16,7 @@ export const productApi = {
    * 根据ID查询产品
    */
   getProductById(id: number): Promise<Result<Product>> {
-    return request.get(`/product/${id}`)
+    return request.get(`/product/${id.toString()}`)
   },
 
   /**
@@ -40,13 +40,20 @@ export const productApi = {
    * 更新产品
    */
   updateProduct(product: Product): Promise<Result> {
-    return request.put(`/product/${product.id}`, product)
+    return request.put(`/product/${product.id.toString()}`, product)
   },
 
   /**
    * 删除产品
    */
   deleteProduct(id: number): Promise<Result> {
-    return request.delete(`/product/${id}`)
+    return request.delete(`/product/${id.toString()}`)
+  },
+
+  /**
+   * 获取所有产品（用于前端分页）
+   */
+  getAllProducts(): Promise<Result<Product[]>> {
+    return request.get('/product/list')
   },
 }

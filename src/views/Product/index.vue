@@ -11,6 +11,39 @@
         </div>
       </template>
 
+      <!-- 搜索条件 -->
+      <el-form :inline="true" :model="searchForm" class="search-form">
+        <el-form-item label="产品名称">
+          <el-input
+            v-model="searchForm.productName"
+            placeholder="请输入产品名称"
+            clearable
+            style="width: 200px"
+            @keyup.enter="handleSearch"
+          />
+        </el-form-item>
+        <el-form-item label="产品类型">
+          <el-select
+            v-model="searchForm.typeId"
+            placeholder="请选择产品类型"
+            clearable
+            style="width: 200px"
+            @change="handleSearch"
+          >
+            <el-option
+              v-for="type in typeList"
+              :key="type.id"
+              :label="type.typeName"
+              :value="type.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="handleSearch">查询</el-button>
+          <el-button @click="resetSearch">重置</el-button>
+        </el-form-item>
+      </el-form>
+
       <el-table
         v-loading="loading"
         :data="productList"
@@ -18,7 +51,6 @@
         style="width: 100%"
         :default-sort="{ prop: 'id', order: 'ascending' }"
       >
-        <el-table-column prop="id" label="产品ID" width="100" sortable />
         <el-table-column prop="productName" label="产品名称" min-width="150" />
         <el-table-column prop="typeName" label="产品类型" width="150">
           <template #default="{ row }">
@@ -57,6 +89,20 @@
           </template>
         </el-table-column>
       </el-table>
+      
+      <!-- 分页 -->
+      <div class="pagination" style="margin-top: 20px; display: flex; justify-content: center;">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[5, 10, 20, 50]"
+          :background="true"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="totalRecords"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
     </el-card>
 
     <!-- 编辑对话框 -->
@@ -117,7 +163,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, FormInstance, FormRules } from 'element-plus'
 import { productApi } from '@/api/product'
 import { productTypeApi } from '@/api/productType'
@@ -126,6 +172,20 @@ import type { Product, ProductType } from '@/types/api'
 const loading = ref(false)
 const productList = ref<Product[]>([])
 const typeList = ref<ProductType[]>([])
+
+// 分页相关状态
+const currentPage = ref(1)
+const pageSize = ref(10)
+const totalRecords = ref(0)
+
+// 存储所有产品数据
+const allProducts = ref<Product[]>([])
+
+// 查询相关状态
+const searchForm = reactive({
+  productName: '',
+  typeId: undefined as number | undefined
+})
 
 // 对话框相关
 const dialogVisible = ref(false)
@@ -166,7 +226,28 @@ const loadProductList = async () => {
   loading.value = true
   try {
     const res = await productApi.getProductList()
-    productList.value = res.data || []
+    allProducts.value = res.data || []
+    
+    // 根据查询条件过滤数据
+    let filteredData = allProducts.value
+    if (searchForm.productName) {
+      filteredData = filteredData.filter(item => 
+        item.productName.toLowerCase().includes(searchForm.productName.toLowerCase())
+      )
+    }
+    
+    if (searchForm.typeId !== undefined && searchForm.typeId !== null) {
+      filteredData = filteredData.filter(item => item.typeId === searchForm.typeId)
+    }
+    
+    // 计算总数
+    totalRecords.value = filteredData.length
+    
+    // 计算当前页数据
+    const startIndex = (currentPage.value - 1) * pageSize.value
+    const endIndex = startIndex + pageSize.value
+    productList.value = filteredData.slice(startIndex, endIndex)
+    
     // 调试：检查数据
     console.log('产品列表数据:', productList.value)
     if (productList.value.length > 0) {
@@ -298,6 +379,33 @@ const resetForm = () => {
   })
 }
 
+// 处理查询
+const handleSearch = () => {
+  currentPage.value = 1  // 查询时回到第一页
+  loadProductList()
+}
+
+// 重置查询
+const resetSearch = () => {
+  searchForm.productName = ''
+  searchForm.typeId = undefined
+  currentPage.value = 1  // 重置时回到第一页
+  loadProductList()
+}
+
+// 处理页面大小变化
+const handleSizeChange = (val: number) => {
+  pageSize.value = val
+  currentPage.value = 1  // 每次改变页面大小时回到第一页
+  loadProductList()
+}
+
+// 处理当前页变化
+const handleCurrentChange = (val: number) => {
+  currentPage.value = val
+  loadProductList()
+}
+
 onMounted(() => {
   loadProductList()
   loadTypeList()
@@ -319,5 +427,15 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+.search-form {
+  margin-bottom: 20px;
+}
+
+.pagination {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
 }
 </style>

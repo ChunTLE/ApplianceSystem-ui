@@ -52,6 +52,59 @@
         </el-form-item>
       </el-form>
     </el-card>
+    
+    <!-- 销售记录表格 -->
+    <el-card style="margin-top: 20px">
+      <template #header>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span>销售记录</span>
+          <div class="query-section" style="display: flex; gap: 10px;">
+            <el-input
+              v-model="queryProductName"
+              placeholder="产品名称"
+              style="width: 200px; margin-right: 10px;"
+              clearable
+              @keyup.enter="handleQuery"
+            />
+            <el-input
+              v-model="querySalesman"
+              placeholder="销售员"
+              style="width: 150px; margin-right: 10px;"
+              clearable
+              @keyup.enter="handleQuery"
+            />
+            <el-button type="primary" @click="handleQuery" :loading="recordsLoading">查询</el-button>
+            <el-button @click="resetQuery">重置</el-button>
+          </div>
+        </div>
+      </template>
+      
+      <el-table
+        :data="saleRecords"
+        stripe
+        style="width: 100%"
+        :loading="recordsLoading"
+      >
+        <el-table-column prop="productName" label="产品名称" />
+        <el-table-column prop="quantity" label="销售数量" width="100" />
+        <el-table-column prop="totalPrice" label="总价格" width="120" :formatter="priceFormatter" />
+        <el-table-column prop="salesman" label="销售员" width="120" />
+        <el-table-column prop="saleTime" label="销售时间" width="180" />
+      </el-table>
+      
+      <div class="pagination" style="margin-top: 20px; display: flex; justify-content: center;">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[5, 10, 20, 50]"
+          :background="true"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="totalRecords"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
+    </el-card>
   </div>
 </template>
 
@@ -62,13 +115,29 @@ import type { FormInstance, FormRules } from 'element-plus'
 import { saleApi } from '@/api/sale'
 import { productApi } from '@/api/product'
 import { useUserStore } from '@/stores/user'
-import type { SaleRequest, Product } from '@/types/api'
+import type { SaleRequest, Product, SaleRecord } from '@/types/api'
 
 const userStore = useUserStore()
 const formRef = ref<FormInstance>()
 const submitting = ref(false)
 const products = ref<Product[]>([])
 const productsLoading = ref(false)
+
+// 销售记录相关状态
+const saleRecords = ref<SaleRecord[]>([])
+const recordsLoading = ref(false)
+
+// 分页相关状态
+const currentPage = ref(1)
+const pageSize = ref(10)
+const totalRecords = ref(0)
+
+// 存储所有记录
+const allRecords = ref<SaleRecord[]>([])
+
+// 查询相关状态
+const queryProductName = ref('')
+const querySalesman = ref('')
 
 const saleForm = reactive<SaleRequest>({
   productId: undefined as any, // 使用undefined以便显示placeholder
@@ -109,8 +178,80 @@ const loadProducts = async () => {
   }
 }
 
+// 加载销售记录
+const loadSaleRecords = async () => {
+  recordsLoading.value = true
+  try {
+    const res = await saleApi.getSaleRecords()
+    if (res.code === 0) {
+      allRecords.value = res.data || []
+      
+      // 根据查询条件过滤数据
+      let filteredData = allRecords.value
+      if (queryProductName.value) {
+        filteredData = filteredData.filter(item => 
+          item.productName.toLowerCase().includes(queryProductName.value.toLowerCase())
+        )
+      }
+      
+      if (querySalesman.value) {
+        filteredData = filteredData.filter(item => 
+          item.salesman.toLowerCase().includes(querySalesman.value.toLowerCase())
+        )
+      }
+      
+      // 计算总数
+      totalRecords.value = filteredData.length
+      
+      // 计算当前页数据
+      const startIndex = (currentPage.value - 1) * pageSize.value
+      const endIndex = startIndex + pageSize.value
+      saleRecords.value = filteredData.slice(startIndex, endIndex)
+    } else {
+      console.error('获取销售记录失败:', res.message)
+    }
+  } catch (error) {
+    console.error('获取销售记录失败:', error)
+  } finally {
+    recordsLoading.value = false
+  }
+}
+
+// 查询销售记录
+const handleQuery = () => {
+  currentPage.value = 1  // 查询时回到第一页
+  loadSaleRecords()
+}
+
+// 重置查询条件
+const resetQuery = () => {
+  queryProductName.value = ''
+  querySalesman.value = ''
+  currentPage.value = 1
+  loadSaleRecords()
+}
+
+// 处理页面大小变化
+const handleSizeChange = (val: number) => {
+  pageSize.value = val
+  currentPage.value = 1  // 每次改变页面大小时回到第一页
+  loadSaleRecords()
+}
+
+// 处理当前页变化
+const handleCurrentChange = (val: number) => {
+  currentPage.value = val
+  loadSaleRecords()
+}
+
+// 价格格式化器
+const priceFormatter = (row: SaleRecord, column: any, cellValue: number) => {
+  return `¥${cellValue.toLocaleString()}`
+}
+
 onMounted(() => {
   loadProducts()
+  loadSaleRecords() // 页面加载时获取销售记录
   // 确保销售员ID始终是当前登录用户
   if (userStore.userInfo?.userId) {
     saleForm.salesmanId = userStore.userInfo.userId
@@ -154,6 +295,8 @@ const handleSale = async () => {
         resetForm()
         // 刷新产品列表以更新库存
         loadProducts()
+        // 刷新销售记录
+        loadSaleRecords()
       } catch (error: any) {
         if (error !== 'cancel') {
           console.error('销售失败:', error)

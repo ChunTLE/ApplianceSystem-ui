@@ -9,9 +9,8 @@
       </template>
 
       <el-table v-loading="loading" :data="userList" stripe style="width: 100%">
-        <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="username" label="用户名" />
-        <el-table-column prop="roleId" label="角色ID" width="100">
+        <el-table-column prop="roleId" label="身份" width="100">
           <template #default="{ row }">
             <el-tag :type="getRoleTagType(row.roleId)">
               {{ getRoleName(row.roleId) }}
@@ -37,6 +36,20 @@
           </template>
         </el-table-column>
       </el-table>
+      
+      <!-- 分页 -->
+      <div class="pagination" style="margin-top: 20px; display: flex; justify-content: center;">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[5, 10, 20, 50]"
+          :background="true"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="totalRecords"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
 
       <!-- 编辑对话框 -->
       <el-dialog
@@ -87,6 +100,14 @@ const userList = ref<User[]>([])
 const dialogVisible = ref(false)
 const formRef = ref<FormInstance>()
 
+// 分页相关状态
+const currentPage = ref(1)
+const pageSize = ref(10)
+const totalRecords = ref(0)
+
+// 存储所有用户数据
+const allUsers = ref<User[]>([])
+
 const form = reactive<User>({
   id: 0,
   username: '',
@@ -116,10 +137,18 @@ const loadUserList = async () => {
   try {
     const res = await userApi.getUserList()
     // 将ID转换为字符串，避免大整数精度丢失
-    userList.value = (res.data || []).map(user => ({
+    allUsers.value = (res.data || []).map(user => ({
       ...user,
       id: String(user.id)  // 确保ID是字符串类型
     }))
+    
+    // 计算总数
+    totalRecords.value = allUsers.value.length
+    
+    // 计算当前页数据
+    const startIndex = (currentPage.value - 1) * pageSize.value
+    const endIndex = startIndex + pageSize.value
+    userList.value = allUsers.value.slice(startIndex, endIndex)
   } catch (error) {
     console.error('加载用户列表失败:', error)
   } finally {
@@ -158,6 +187,8 @@ const handleDelete = async (row: User) => {
     const userId = String(row.id)
     await userApi.deleteUser(userId)
     ElMessage.success('删除成功')
+    // 重新加载数据并重置到第一页
+    currentPage.value = 1
     loadUserList()
   } catch (error: any) {
     if (error !== 'cancel') {
@@ -189,6 +220,8 @@ const handleSubmit = async () => {
         }
         ElMessage.success('操作成功')
         dialogVisible.value = false
+        // 重新加载数据并重置到第一页
+        currentPage.value = 1
         loadUserList()
       } catch (error) {
         console.error('操作失败:', error)
@@ -206,6 +239,25 @@ const resetForm = () => {
     roleId: 1,
     status: 1,
   })
+}
+
+// 处理页面大小变化
+const handleSizeChange = (val: number) => {
+  pageSize.value = val
+  currentPage.value = 1  // 每次改变页面大小时回到第一页
+  // 重新计算当前页数据
+  const startIndex = (currentPage.value - 1) * pageSize.value
+  const endIndex = startIndex + pageSize.value
+  userList.value = allUsers.value.slice(startIndex, endIndex)
+}
+
+// 处理当前页变化
+const handleCurrentChange = (val: number) => {
+  currentPage.value = val
+  // 计算当前页数据
+  const startIndex = (currentPage.value - 1) * pageSize.value
+  const endIndex = startIndex + pageSize.value
+  userList.value = allUsers.value.slice(startIndex, endIndex)
 }
 
 const formatTime = (time: string) => {

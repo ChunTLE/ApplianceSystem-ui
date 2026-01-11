@@ -38,7 +38,6 @@
 
       <!-- 产品列表 -->
       <el-table v-loading="loading" :data="productList" stripe style="width: 100%">
-        <el-table-column prop="id" label="产品ID" width="100" />
         <el-table-column prop="productName" label="产品名称" min-width="150" />
         <el-table-column prop="typeId" label="类型ID" width="100" />
         <el-table-column prop="price" label="价格" width="120">
@@ -61,6 +60,20 @@
           </template>
         </el-table-column>
       </el-table>
+      
+      <!-- 分页 -->
+      <div class="pagination" style="margin-top: 20px; display: flex; justify-content: center;">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[5, 10, 20, 50]"
+          :background="true"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="totalRecords"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
     </el-card>
   </div>
 </template>
@@ -74,6 +87,11 @@ import type { Product, ProductType } from '@/types/api'
 const loading = ref(false)
 const productList = ref<Product[]>([])
 const typeList = ref<ProductType[]>([])
+
+// 分页相关状态
+const currentPage = ref(1)
+const pageSize = ref(10)
+const totalRecords = ref(0)
 
 const searchForm = reactive({
   productName: '',
@@ -89,14 +107,38 @@ const loadTypeList = async () => {
   }
 }
 
+let allProducts: Product[] = []  // 存储所有产品数据
+
 const handleSearch = async () => {
   loading.value = true
   try {
-    const res = await productApi.searchProduct(
-      searchForm.productName || undefined,
-      searchForm.typeId
-    )
-    productList.value = res.data || []
+    // 获取所有产品数据
+    const res = await productApi.getAllProducts()
+    if (res.code === 0) {
+      allProducts = res.data || []
+      
+      // 根据查询条件过滤数据
+      let filteredData = allProducts
+      if (searchForm.productName) {
+        filteredData = filteredData.filter(item => 
+          item.productName.toLowerCase().includes(searchForm.productName.toLowerCase())
+        )
+      }
+      
+      if (searchForm.typeId !== undefined && searchForm.typeId !== null) {
+        filteredData = filteredData.filter(item => item.typeId === searchForm.typeId)
+      }
+      
+      // 计算总数
+      totalRecords.value = filteredData.length
+      
+      // 计算当前页数据
+      const startIndex = (currentPage.value - 1) * pageSize.value
+      const endIndex = startIndex + pageSize.value
+      productList.value = filteredData.slice(startIndex, endIndex)
+    } else {
+      console.error('搜索失败:', res.message)
+    }
   } catch (error) {
     console.error('搜索失败:', error)
   } finally {
@@ -107,6 +149,20 @@ const handleSearch = async () => {
 const resetSearch = () => {
   searchForm.productName = ''
   searchForm.typeId = undefined
+  currentPage.value = 1  // 重置时回到第一页
+  handleSearch()
+}
+
+// 处理页面大小变化
+const handleSizeChange = (val: number) => {
+  pageSize.value = val
+  currentPage.value = 1  // 每次改变页面大小时回到第一页
+  handleSearch()
+}
+
+// 处理当前页变化
+const handleCurrentChange = (val: number) => {
+  currentPage.value = val
   handleSearch()
 }
 

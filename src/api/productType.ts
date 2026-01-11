@@ -16,7 +16,7 @@ export const productTypeApi = {
    * 根据ID查询产品类型
    */
   getTypeById(id: number): Promise<Result<ProductType>> {
-    return request.get(`/product-type/${id}`)
+    return request.get(`/product-type/${id.toString()}`)
   },
 
   /**
@@ -37,7 +37,7 @@ export const productTypeApi = {
    * 删除产品类型
    */
   deleteType(id: number): Promise<Result> {
-    return request.delete(`/product-type/${id}`)
+    return request.delete(`/product-type/${id.toString()}`)
   },
 }
 

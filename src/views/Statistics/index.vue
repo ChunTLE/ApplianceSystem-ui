@@ -26,29 +26,103 @@
           <div class="chart-container">
             <div ref="stockInChartRef" class="chart"></div>
           </div>
-          <el-table :data="stockInData" stripe style="width: 100%">
+          <!-- 入库统计查询表单 -->
+          <el-form :inline="true" :model="stockInSearchForm" class="search-form">
+            <el-form-item label="产品名称">
+              <el-input
+                v-model="stockInSearchForm.productName"
+                placeholder="请输入产品名称"
+                clearable
+                style="width: 200px"
+                @keyup.enter="handleStockInSearch"
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="handleStockInSearch">查询</el-button>
+              <el-button @click="resetStockInSearch">重置</el-button>
+            </el-form-item>
+          </el-form>
+          <el-table :data="stockInTableData" stripe style="width: 100%">
             <el-table-column prop="label" label="日期" />
             <el-table-column prop="productName" label="产品名称" />
             <el-table-column prop="count" label="入库数量" />
           </el-table>
+          <!-- 入库统计分页 -->
+          <div class="pagination" style="margin-top: 20px; display: flex; justify-content: center;">
+            <el-pagination
+              v-model:current-page="stockInCurrentPage"
+              v-model:page-size="stockInPageSize"
+              :page-sizes="[5, 10, 20, 50]"
+              :background="true"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="stockInTotalRecords"
+              @size-change="handleStockInSizeChange"
+              @current-change="handleStockInCurrentChange"
+            />
+          </div>
         </el-tab-pane>
 
         <el-tab-pane label="出库统计" name="stockOut">
           <div class="chart-container">
             <div ref="stockOutChartRef" class="chart"></div>
           </div>
-          <el-table :data="stockOutData" stripe style="width: 100%">
+          <!-- 出库统计查询表单 -->
+          <el-form :inline="true" :model="stockOutSearchForm" class="search-form">
+            <el-form-item label="产品名称">
+              <el-input
+                v-model="stockOutSearchForm.productName"
+                placeholder="请输入产品名称"
+                clearable
+                style="width: 200px"
+                @keyup.enter="handleStockOutSearch"
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="handleStockOutSearch">查询</el-button>
+              <el-button @click="resetStockOutSearch">重置</el-button>
+            </el-form-item>
+          </el-form>
+          <el-table :data="stockOutTableData" stripe style="width: 100%">
             <el-table-column prop="label" label="日期" />
             <el-table-column prop="productName" label="产品名称" />
             <el-table-column prop="count" label="出库数量" />
           </el-table>
+          <!-- 出库统计分页 -->
+          <div class="pagination" style="margin-top: 20px; display: flex; justify-content: center;">
+            <el-pagination
+              v-model:current-page="stockOutCurrentPage"
+              v-model:page-size="stockOutPageSize"
+              :page-sizes="[5, 10, 20, 50]"
+              :background="true"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="stockOutTotalRecords"
+              @size-change="handleStockOutSizeChange"
+              @current-change="handleStockOutCurrentChange"
+            />
+          </div>
         </el-tab-pane>
 
         <el-tab-pane label="销售统计" name="saleDetail">
           <div class="chart-container">
             <div ref="saleChartRef" class="chart"></div>
           </div>
-          <el-table :data="saleDetailData" stripe style="width: 100%">
+          <!-- 销售统计查询表单 -->
+          <el-form :inline="true" :model="saleSearchForm" class="search-form">
+            <el-form-item label="产品名称">
+              <el-input
+                v-model="saleSearchForm.productName"
+                placeholder="请输入产品名称"
+                clearable
+                style="width: 200px"
+                @keyup.enter="handleSaleSearch"
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="handleSaleSearch">查询</el-button>
+              <el-button @click="resetSaleSearch">重置</el-button>
+            </el-form-item>
+          </el-form>
+          <el-table :data="saleDetailTableData" stripe style="width: 100%">
             <el-table-column prop="date" label="销售日期" width="120" />
             <el-table-column prop="productName" label="产品名称" width="150" />
             <el-table-column prop="quantity" label="销售数量" width="100" />
@@ -58,6 +132,19 @@
               </template>
             </el-table-column>
           </el-table>
+          <!-- 销售统计分页 -->
+          <div class="pagination" style="margin-top: 20px; display: flex; justify-content: center;">
+            <el-pagination
+              v-model:current-page="saleCurrentPage"
+              v-model:page-size="salePageSize"
+              :page-sizes="[5, 10, 20, 50]"
+              :background="true"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="saleTotalRecords"
+              @size-change="handleSaleSizeChange"
+              @current-change="handleSaleCurrentChange"
+            />
+          </div>
         </el-tab-pane>
       </el-tabs>
     </el-card>
@@ -65,7 +152,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
 import { statisticsApi } from '@/api/statistics'
@@ -76,6 +163,41 @@ const dateRange = ref<[string, string] | null>(null)
 const stockInData = ref<StatisticsVO[]>([])
 const stockOutData = ref<StatisticsVO[]>([])
 const saleDetailData = ref<SaleDetailVO[]>([])
+
+// 入库统计分页相关状态
+const stockInCurrentPage = ref(1)
+const stockInPageSize = ref(10)
+const stockInTotalRecords = ref(0)
+const stockInTableData = ref<StatisticsVO[]>([])
+
+// 入库统计查询相关状态
+const stockInSearchForm = reactive({
+  label: '',
+  productName: ''
+})
+
+// 出库统计分页相关状态
+const stockOutCurrentPage = ref(1)
+const stockOutPageSize = ref(10)
+const stockOutTotalRecords = ref(0)
+const stockOutTableData = ref<StatisticsVO[]>([])
+
+// 出库统计查询相关状态
+const stockOutSearchForm = reactive({
+  label: '',
+  productName: ''
+})
+
+// 销售统计分页相关状态
+const saleCurrentPage = ref(1)
+const salePageSize = ref(10)
+const saleTotalRecords = ref(0)
+const saleDetailTableData = ref<SaleDetailVO[]>([])
+
+// 销售统计查询相关状态
+const saleSearchForm = reactive({
+  productName: ''
+})
 
 // 图表引用
 const stockInChartRef = ref<HTMLDivElement>()
@@ -103,6 +225,11 @@ const loadStatistics = async () => {
     console.log('获取的入库统计数据:', stockInData.value)
     stockOutData.value = stockOutRes.data || []
     saleDetailData.value = saleDetailRes.data || []
+    
+    // 初始化分页数据
+    initStockInPagination();
+    initStockOutPagination();
+    initSalePagination();
 
     // 渲染入库统计图表
     if (activeTab.value === 'stockIn' && stockInChartRef.value) {
@@ -126,6 +253,39 @@ const loadStatistics = async () => {
   } catch (error) {
     console.error('加载统计失败:', error)
   }
+}
+
+// 初始化入库统计分页数据
+const initStockInPagination = () => {
+  // 计算总数
+  stockInTotalRecords.value = stockInData.value.length;
+  
+  // 计算当前页数据
+  const startIndex = (stockInCurrentPage.value - 1) * stockInPageSize.value;
+  const endIndex = startIndex + stockInPageSize.value;
+  stockInTableData.value = stockInData.value.slice(startIndex, endIndex);
+}
+
+// 初始化出库统计分页数据
+const initStockOutPagination = () => {
+  // 计算总数
+  stockOutTotalRecords.value = stockOutData.value.length;
+  
+  // 计算当前页数据
+  const startIndex = (stockOutCurrentPage.value - 1) * stockOutPageSize.value;
+  const endIndex = startIndex + stockOutPageSize.value;
+  stockOutTableData.value = stockOutData.value.slice(startIndex, endIndex);
+}
+
+// 初始化销售统计分页数据
+const initSalePagination = () => {
+  // 计算总数
+  saleTotalRecords.value = saleDetailData.value.length;
+  
+  // 计算当前页数据
+  const startIndex = (saleCurrentPage.value - 1) * salePageSize.value;
+  const endIndex = startIndex + salePageSize.value;
+  saleDetailTableData.value = saleDetailData.value.slice(startIndex, endIndex);
 }
 
 // 渲染入库统计柱状图
@@ -418,6 +578,151 @@ const handleTabChange = async () => {
   }
 }
 
+// 入库统计查询处理
+const handleStockInSearch = () => {
+  stockInCurrentPage.value = 1; // 查询时回到第一页
+  updateStockInTableData();
+};
+
+// 重置入库统计查询
+const resetStockInSearch = () => {
+  stockInSearchForm.productName = '';
+  stockInCurrentPage.value = 1; // 重置时回到第一页
+  updateStockInTableData();
+};
+
+// 更新入库统计表格数据
+const updateStockInTableData = () => {
+  let filteredData = [...stockInData.value];
+  
+  // 根据查询条件过滤数据
+  if (stockInSearchForm.productName) {
+    filteredData = filteredData.filter(item => 
+      item.productName.toLowerCase().includes(stockInSearchForm.productName.toLowerCase())
+    );
+  }
+  
+  // 计算总数
+  stockInTotalRecords.value = filteredData.length;
+  
+  // 计算当前页数据
+  const startIndex = (stockInCurrentPage.value - 1) * stockInPageSize.value;
+  const endIndex = startIndex + stockInPageSize.value;
+  stockInTableData.value = filteredData.slice(startIndex, endIndex);
+};
+
+// 入库统计页面大小变化
+const handleStockInSizeChange = (val: number) => {
+  stockInPageSize.value = val;
+  stockInCurrentPage.value = 1; // 每次改变页面大小时回到第一页
+  updateStockInTableData();
+};
+
+// 入库统计当前页变化
+const handleStockInCurrentChange = (val: number) => {
+  stockInCurrentPage.value = val;
+  updateStockInTableData();
+};
+
+// 出库统计查询处理
+const handleStockOutSearch = () => {
+  stockOutCurrentPage.value = 1; // 查询时回到第一页
+  updateStockOutTableData();
+};
+
+// 重置出库统计查询
+const resetStockOutSearch = () => {
+  stockOutSearchForm.productName = '';
+  stockOutCurrentPage.value = 1; // 重置时回到第一页
+  updateStockOutTableData();
+};
+
+// 更新出库统计表格数据
+const updateStockOutTableData = () => {
+  let filteredData = [...stockOutData.value];
+  
+  // 根据查询条件过滤数据
+  if (stockOutSearchForm.productName) {
+    filteredData = filteredData.filter(item => 
+      item.productName.toLowerCase().includes(stockOutSearchForm.productName.toLowerCase())
+    );
+  }
+  
+  // 计算总数
+  stockOutTotalRecords.value = filteredData.length;
+  
+  // 计算当前页数据
+  const startIndex = (stockOutCurrentPage.value - 1) * stockOutPageSize.value;
+  const endIndex = startIndex + stockOutPageSize.value;
+  stockOutTableData.value = filteredData.slice(startIndex, endIndex);
+};
+
+// 出库统计页面大小变化
+const handleStockOutSizeChange = (val: number) => {
+  stockOutPageSize.value = val;
+  stockOutCurrentPage.value = 1; // 每次改变页面大小时回到第一页
+  updateStockOutTableData();
+};
+
+// 出库统计当前页变化
+const handleStockOutCurrentChange = (val: number) => {
+  stockOutCurrentPage.value = val;
+  updateStockOutTableData();
+};
+
+// 销售统计查询处理
+const handleSaleSearch = () => {
+  saleCurrentPage.value = 1; // 查询时回到第一页
+  updateSaleTableData();
+};
+
+// 重置销售统计查询
+const resetSaleSearch = () => {
+  saleSearchForm.date = '';
+  saleSearchForm.productName = '';
+  saleCurrentPage.value = 1; // 重置时回到第一页
+  updateSaleTableData();
+};
+
+// 更新销售统计表格数据
+const updateSaleTableData = () => {
+  let filteredData = [...saleDetailData.value];
+  
+  // 根据查询条件过滤数据
+  if (saleSearchForm.date) {
+    filteredData = filteredData.filter(item => 
+      item.date.toLowerCase().includes(saleSearchForm.date.toLowerCase())
+    );
+  }
+  
+  if (saleSearchForm.productName) {
+    filteredData = filteredData.filter(item => 
+      item.productName.toLowerCase().includes(saleSearchForm.productName.toLowerCase())
+    );
+  }
+  
+  // 计算总数
+  saleTotalRecords.value = filteredData.length;
+  
+  // 计算当前页数据
+  const startIndex = (saleCurrentPage.value - 1) * salePageSize.value;
+  const endIndex = startIndex + salePageSize.value;
+  saleDetailTableData.value = filteredData.slice(startIndex, endIndex);
+};
+
+// 销售统计页面大小变化
+const handleSaleSizeChange = (val: number) => {
+  salePageSize.value = val;
+  saleCurrentPage.value = 1; // 每次改变页面大小时回到第一页
+  updateSaleTableData();
+};
+
+// 销售统计当前页变化
+const handleSaleCurrentChange = (val: number) => {
+  saleCurrentPage.value = val;
+  updateSaleTableData();
+};
+
 const exportData = () => {
   // 导出为CSV格式
   let csvContent = ''
@@ -461,6 +766,11 @@ onMounted(() => {
   loadStatistics()
 })
 
+// 在组件挂载后初始化分页数据
+onMounted(() => {
+  loadStatistics()
+})
+
 // 在组件卸载时销毁图表和事件监听器
 onUnmounted(() => {
   if (stockInChart) {
@@ -495,6 +805,16 @@ onUnmounted(() => {
 .chart {
   width: 100%;
   height: 100%;
+}
+
+.search-form {
+  margin-bottom: 20px;
+}
+
+.pagination {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
 }
 </style>
 

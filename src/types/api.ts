@@ -138,3 +138,48 @@ export interface SaleChartVO {
   productNames: string[]
   dates: string[]
 }
+
+/**
+ * 入库记录
+ */
+export interface StockInRecord {
+  id: number
+  productName: string
+  quantity: number
+  operator: string
+  inTime: string
+}
+
+/**
+ * 出库记录
+ */
+export interface StockOutRecord {
+  id: number
+  productName: string
+  quantity: number
+  operator: string
+  outTime: string
+}
+
+/**
+ * 销售记录
+ */
+export interface SaleRecord {
+  id: number
+  productName: string
+  quantity: number
+  totalPrice: number
+  salesman: string
+  saleTime: string
+}
+
+/**
+ * 分页结果
+ */
+export interface PageResult<T> {
+  records: T[]
+  total: number
+  current: number
+  size: number
+  pages: number
+}

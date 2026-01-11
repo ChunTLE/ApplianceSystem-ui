@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import type { Result, StockRequest } from '@/types/api'
+import type { Result, StockRequest, StockInRecord, StockOutRecord } from '@/types/api'
 
 /**
  * 库存API
@@ -25,6 +25,20 @@ export const stockApi = {
     params.append('quantity', data.quantity.toString())
     params.append('operatorId', data.operatorId.toString())
     return request.post(`/stock/out?${params.toString()}`)
+  },
+
+  /**
+   * 获取入库记录
+   */
+  getStockInRecords(): Promise<Result<StockInRecord[]>> {
+    return request.get('/stock/in-records')
+  },
+
+  /**
+   * 获取出库记录
+   */
+  getStockOutRecords(): Promise<Result<StockOutRecord[]>> {
+    return request.get('/stock/out-records')
   },
 }
 
