@@ -221,7 +221,7 @@ const rules: FormRules = {
 const loadProductList = async () => {
   loading.value = true
   try {
-    const res = await productApi.getProductList()
+    const res = await productApi.getAllProductList()
     allProducts.value = res.data || []
     
     // 根据查询条件过滤数据

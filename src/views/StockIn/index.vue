@@ -194,6 +194,7 @@ const loadProducts = async () => {
   try {
     const res = await productApi.getProductList()
     products.value = res.data || []
+    console.log('Loaded products:', products.value)
   } catch (error) {
     console.error('加载产品列表失败:', error)
   } finally {

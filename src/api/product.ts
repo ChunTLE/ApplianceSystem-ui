@@ -13,6 +13,13 @@ export const productApi = {
   },
 
   /**
+   * 查询所有产品（包含已下架）
+   */
+  getAllProductList(): Promise<Result<Product[]>> {
+    return request.get('/product/all')
+  },
+
+  /**
    * 根据ID查询产品
    */
   getProductById(id: number): Promise<Result<Product>> {
