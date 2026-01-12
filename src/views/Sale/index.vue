@@ -85,6 +85,12 @@
         <el-table-column prop="totalPrice" label="总价格" width="120" :formatter="priceFormatter" />
         <el-table-column prop="salesman" label="销售员" width="120" />
         <el-table-column prop="saleTime" label="销售时间" width="180" />
+        <el-table-column label="操作" width="150" fixed="right">
+          <template #default="{ row }">
+            <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+            <el-button type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+          </template>
+        </el-table-column>
       </el-table>
       
       <el-skeleton v-else :rows="6" animated />
@@ -102,6 +108,21 @@
         />
       </div>
     </el-card>
+    
+    <!-- 编辑销售记录对话框 -->
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px">
+      <el-form :model="editForm" label-width="100px">
+        <el-form-item label="销售数量">
+          <el-input-number v-model="editForm.quantity" :min="1" style="width: 100%" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleSubmit">确定</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -113,6 +134,11 @@ import { saleApi } from '@/api/sale'
 import { productApi } from '@/api/product'
 import { useUserStore } from '@/stores/user'
 import type { SaleRequest, Product, SaleRecord } from '@/types/api'
+
+interface EditableSaleRecord {
+  id: number
+  quantity: number
+}
 
 const userStore = useUserStore()
 const formRef = ref<FormInstance>()
@@ -135,6 +161,14 @@ const allRecords = ref<SaleRecord[]>([])
 // 查询相关状态
 const queryProductName = ref('')
 const querySalesman = ref('')
+
+// 编辑销售记录相关状态
+const dialogVisible = ref(false)
+const dialogTitle = ref('')
+const editForm = ref<EditableSaleRecord>({ 
+  id: 0,
+  quantity: 0
+})
 
 const saleForm = reactive<SaleRequest>({
   productId: undefined as any, // 使用undefined以便显示placeholder
@@ -313,6 +347,66 @@ const resetForm = () => {
     salesmanId: userStore.userInfo?.userId || 0, // 重置时保持当前用户
   })
 }
+
+// 处理编辑销售记录
+const handleEdit = (row: SaleRecord) => {
+  dialogTitle.value = '编辑销售记录'
+  // 复制需要编辑的字段到表单
+  Object.assign(editForm.value, { 
+    id: row.id,
+    quantity: row.quantity
+  })
+  dialogVisible.value = true
+}
+
+// 处理删除销售记录
+const handleDelete = async (row: SaleRecord) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除产品 "${row.productName}" 的销售记录吗？`,
+      '提示',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+    
+    await saleApi.deleteSaleRecord(row.id)
+    ElMessage.success('删除成功')
+    // 重新加载数据
+    loadSaleRecords()
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      console.error('删除失败:', error)
+      ElMessage.error('删除失败')
+    }
+  }
+}
+
+// 提交编辑表单
+const handleSubmit = async () => {
+  try {
+    // 创建完整的销售记录对象用于更新
+    const recordToUpdate: SaleRecord = {
+      id: editForm.value.id,
+      quantity: editForm.value.quantity,
+      totalPrice: 0, // 价格字段设为0，让后端重新计算
+      productName: '', // 后端可能不需要这些字段，但类型要求
+      salesman: '',
+      saleTime: ''
+    }
+    
+    await saleApi.updateSaleRecord(recordToUpdate)
+    ElMessage.success('更新成功')
+    dialogVisible.value = false
+    // 重新加载数据
+    loadSaleRecords()
+  } catch (error) {
+    console.error('更新失败:', error)
+    ElMessage.error('更新失败')
+  }
+}
 </script>
 
 <style scoped>
@@ -320,4 +414,3 @@ const resetForm = () => {
   height: 100%;
 }
 </style>
-

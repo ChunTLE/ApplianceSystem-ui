@@ -22,5 +22,19 @@ export const saleApi = {
   getSaleRecords(): Promise<Result<SaleRecord[]>> {
     return request.get('/sale/records')
   },
+
+  /**
+   * 更新销售记录
+   */
+  updateSaleRecord(data: Partial<SaleRecord>): Promise<Result> {
+    return request.put('/sale/update', data)
+  },
+
+  /**
+   * 删除销售记录
+   */
+  deleteSaleRecord(id: number): Promise<Result> {
+    return request.delete(`/sale/${id.toString()}`)
+  },
 }
 
