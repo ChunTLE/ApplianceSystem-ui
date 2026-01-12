@@ -84,6 +84,12 @@
         <el-table-column prop="quantity" label="入库数量" width="100" />
         <el-table-column prop="operator" label="操作员" width="120" />
         <el-table-column prop="inTime" label="入库时间" width="180" />
+        <el-table-column label="操作" width="150" fixed="right">
+          <template #default="{ row }">
+            <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+            <el-button type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+          </template>
+        </el-table-column>
       </el-table>
       
       <el-skeleton v-else :rows="6" animated />
@@ -101,6 +107,21 @@
         />
       </div>
     </el-card>
+    
+    <!-- 编辑入库记录对话框 -->
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px">
+      <el-form :model="editForm" label-width="100px">
+        <el-form-item label="入库数量">
+          <el-input-number v-model="editForm.quantity" :min="1" style="width: 100%" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleSubmit">确定</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -112,6 +133,11 @@ import { stockApi } from '@/api/stock'
 import { productApi } from '@/api/product'
 import { useUserStore } from '@/stores/user'
 import type { StockRequest, Product, StockInRecord } from '@/types/api'
+
+interface EditableStockInRecord {
+  id: number
+  quantity: number
+}
 
 const userStore = useUserStore()
 const formRef = ref<FormInstance>()
@@ -127,6 +153,14 @@ const pageSize = ref(10)
 const totalRecords = ref(0)
 const queryProductName = ref('')
 const queryOperator = ref('')
+
+// 编辑入库记录相关状态
+const dialogVisible = ref(false)
+const dialogTitle = ref('')
+const editForm = ref<EditableStockInRecord>({ 
+  id: 0,
+  quantity: 0
+})
 
 const stockInForm = reactive<StockRequest>({
   productId: undefined as any, // 使用undefined以便显示placeholder
@@ -283,6 +317,65 @@ const handleCurrentChange = (val: number) => {
   loadStockInRecords()
 }
 
+// 处理编辑入库记录
+const handleEdit = (row: StockInRecord) => {
+  dialogTitle.value = '编辑入库记录'
+  // 复制需要编辑的字段到表单
+  Object.assign(editForm.value, { 
+    id: row.id,
+    quantity: row.quantity
+  })
+  dialogVisible.value = true
+}
+
+// 处理删除入库记录
+const handleDelete = async (row: StockInRecord) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除产品 "${row.productName}" 的入库记录吗？`,
+      '提示',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+    console.log('Deleting record with ID:', row.id)
+    await stockApi.deleteStockInRecord(row.id)
+    ElMessage.success('删除成功')
+    // 重新加载数据
+    loadStockInRecords()
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      console.error('删除失败:', error)
+      ElMessage.error('删除失败')
+    }
+  }
+}
+
+// 提交编辑表单
+const handleSubmit = async () => {
+  try {
+    // 创建完整的入库记录对象用于更新
+    const recordToUpdate: StockInRecord = {
+      id: editForm.value.id,
+      quantity: editForm.value.quantity,
+      productName: '', // 后端可能不需要这些字段，但类型要求
+      operator: '',
+      inTime: ''
+    }
+    
+    await stockApi.updateStockInRecord(recordToUpdate)
+    ElMessage.success('更新成功')
+    dialogVisible.value = false
+    // 重新加载数据
+    loadStockInRecords()
+  } catch (error) {
+    console.error('更新失败:', error)
+    ElMessage.error('更新失败')
+  }
+}
+
 onMounted(() => {
   loadProducts()
   loadStockInRecords() // 页面加载时获取入库记录
@@ -298,4 +391,3 @@ onMounted(() => {
   height: 100%;
 }
 </style>
-

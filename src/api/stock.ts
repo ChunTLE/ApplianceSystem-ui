@@ -40,5 +40,33 @@ export const stockApi = {
   getStockOutRecords(): Promise<Result<StockOutRecord[]>> {
     return request.get('/stock/out-records')
   },
+
+  /**
+   * 更新入库记录
+   */
+  updateStockInRecord(data: StockInRecord): Promise<Result> {
+    return request.put('/stock/in', data)
+  },
+
+  /**
+   * 删除入库记录
+   */
+  deleteStockInRecord(id: number): Promise<Result> {
+    return request.delete(`/stock/in/${id.toString()}`)
+  },
+
+  /**
+   * 更新出库记录
+   */
+  updateStockOutRecord(data: StockOutRecord): Promise<Result> {
+    return request.put('/stock/out', data)
+  },
+
+  /**
+   * 删除出库记录
+   */
+  deleteStockOutRecord(id: number): Promise<Result> {
+    return request.delete(`/stock/out/${id.toString()}`)
+  },
 }
 
